@@ -2,6 +2,8 @@
 # -*- coding:utf-8 -*-
 
 from __future__ import print_function, division
+
+from line_detect import detect_lines
 import rospy
 import numpy as np
 import numpy
@@ -51,6 +53,7 @@ check_delay = False
 
 resultados = [] # Criacao de uma variavel global para guardar os resultados vistos
 
+xfuga = None
 x = 0
 y = 0
 z = 0 
@@ -68,6 +71,7 @@ def recebe(msg):
 	global y
 	global z
 	global id
+
 	for marker in msg.markers:
 		id = marker.id
 		marcador = "ar_marker_" + str(id)
@@ -143,8 +147,8 @@ if __name__=="__main__":
 
     topico_imagem = "/camera/rgb/image_raw/compressed"
 
-    recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
-    recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
+    recebedor1 = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
+    recebedor2 = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
 
 
     print("Usando ", topico_imagem)
@@ -162,9 +166,25 @@ if __name__=="__main__":
         # vel = Twist(Vector3(0,0,0), Vector3(0,0,math.pi/10.0))
         
         while not rospy.is_shutdown():
-            for r in resultados:
-                print(r)
-            #velocidade_saida.publish(vel)
+            # print(centro)
+
+            # for r in resultados:
+            #     print(r)
+
+            if (cv_image is not None) and (len(centro) > 0):
+                xfuga = detect_lines(cv_image)
+                print(centro)
+                print(xfuga)
+
+                if (xfuga > (centro[0] + tolerancia)):
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.03))
+                elif (xfuga < (centro[0] - tolerancia)):
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.03))
+                elif (centro[0]- tolerancia) < xfuga < (centro[0] + tolerancia):
+                    vel = Twist(Vector3(0.2,0,0), Vector3(0,0,0))
+                    print("FRENTE")
+                velocidade_saida.publish(vel)
+            
             rospy.sleep(0.1)
 
     except rospy.ROSInterruptException:
