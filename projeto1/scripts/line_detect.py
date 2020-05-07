@@ -45,16 +45,19 @@ def detect_lines(frame):
                         line1=True
                         m1 = m
                         h1 = y1 - m * x1
-                        # cv2.line(frame,(x1,y1), (x2,y2), (255,0,0),2)
+                        cv2.line(frame,(x1,y1), (x2,y2), (255,0,0),2)
                 elif m > 0.25 and m < 3:
                     if line2 == False:
                         line2 = True
                         m2 = m
                         h2 = y1 - m * x1
-                        # cv2.line(frame,(x1,y1), (x2,y2), (255,0,0),2)
+                        cv2.line(frame,(x1,y1), (x2,y2), (255,0,0),2)
         if (m1-m2)!=0:                    
-            xfuga = -0.5 * int((h2-h1)/(m1-m2))
+            xfuga = -1 * int((h2-h1)/(m1-m2))
         # yfuga = int(m1 * xfuga + h1) 
         # cv2.circle(frame,(xfuga,yfuga), 10, (0,0,0), -1)
+
+        # cv2.imshow('frame', frame)
+        # cv2.waitKey(1)
 
         return xfuga
