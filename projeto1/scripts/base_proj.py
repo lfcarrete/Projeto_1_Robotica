@@ -21,17 +21,6 @@ import tf2_ros
 from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
 from ar_track_alvar_msgs.msg import AlvarMarker, AlvarMarkers
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image
-from std_msgs.msg import Header
-from numpy import linalg
-from tf import transformations
-from tf import TransformerROS
-import tf2_ros
-import math
-from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
-from ar_track_alvar_msgs.msg import AlvarMarker, AlvarMarkers
-from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Image
 from std_msgs.msg import Header
 
 import visao_module
@@ -59,13 +48,15 @@ y = 0
 z = 0 
 id = 0
 
-#frame = "camera_link"
-frame = None
+frame = "camera_link"
+mask = None
 # frame = "head_camera"  # DESCOMENTE para usar com webcam USB via roslaunch tag_tracking usbcam
 
 tfl = 0
 
-tf_buffer = tf2_ros.Buffer()
+global saida_net = None
+
+#tf_buffer = tf2_ros.Buffer()
 
 def recebe(msg):
 	global x # O global impede a recriacao de uma variavel local, para podermos usar o x global ja'  declarado
@@ -131,11 +122,13 @@ def roda_todo_frame(imagem):
         cv_image = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
         # Note que os resultados já são guardados automaticamente na variável
         # chamada resultados
-        centro, imagem, resultados =  visao_module.processa(cv_image)        
+        centro, img, resultados =  visao_module.processa(cv_image)        
         for r in resultados:
             # print(r) - print feito para documentar e entender
             # o resultado            
             pass
+
+        saida_net = img.copy()
 
         depois = time.clock()
         # Desnecessário - Hough e MobileNet já abrem janelas
@@ -145,13 +138,16 @@ def roda_todo_frame(imagem):
     
 if __name__=="__main__":
 
-    #tfl = tf2_ros.TransformListener(tf_buffer)
+    
     rospy.init_node("cor")
 
     topico_imagem = "/camera/rgb/image_raw/compressed"
 
     recebedor1 = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
-    recebedor2 = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
+    ### Comentador por Miranda
+    ### recebedor2 = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
+    ### tfl = tf2_ros.TransformListener(tf_buffer)
+
 
 
     print("Usando ", topico_imagem)
@@ -175,23 +171,27 @@ if __name__=="__main__":
             # for r in resultados:
             #     print(r)
 
-            if frame is not None:
-            	cv2.imshow("AAA", frame)
+            #if frame is not None:
+            	#cv2.imshow("AAA", frame)
 
             if (cv_image is not None) and (len(centro) > 0):
-                xfuga, frame = detect_lines(cv_image)
+                xfuga, mask = detect_lines(cv_image)
+                cv2.imshow('mask', mask)
+                cv2.waitKey(1)                
                 print(centro)
                 print(xfuga)
 
                 if (xfuga > (centro[0] + tolerancia)):
-                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.03))
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,-0.1))
                 elif (xfuga < (centro[0] - tolerancia)):
-                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.03))
+                    vel = Twist(Vector3(0.0,0,0), Vector3(0,0,0.1))
                 elif (centro[0]- tolerancia) < xfuga < (centro[0] + tolerancia):
                     vel = Twist(Vector3(0.2,0,0), Vector3(0,0,0))
                     print("FRENTE")
                 velocidade_saida.publish(vel)
             
+            cv2.imshow("SAIDA NET", saida_net)
+            cv2.waitKey(1)
             rospy.sleep(0.1)
 
     except rospy.ROSInterruptException:
