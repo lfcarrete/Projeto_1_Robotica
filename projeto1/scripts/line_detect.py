@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 
 def detect_lines(frame):
     global xfuga
+    y_image = int(frame.shape[0]*(2/3))
+    frame[:y_image] = 0
     teste_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     # Apply edge detection method on the image 
@@ -57,7 +59,6 @@ def detect_lines(frame):
         # yfuga = int(m1 * xfuga + h1) 
         # cv2.circle(frame,(xfuga,yfuga), 10, (0,0,0), -1)
 
-        # cv2.imshow('frame', frame)
         # cv2.waitKey(1)
 
-        return xfuga
+        return xfuga, frame

@@ -59,7 +59,8 @@ y = 0
 z = 0 
 id = 0
 
-frame = "camera_link"
+#frame = "camera_link"
+frame = None
 # frame = "head_camera"  # DESCOMENTE para usar com webcam USB via roslaunch tag_tracking usbcam
 
 tfl = 0
@@ -143,6 +144,8 @@ def roda_todo_frame(imagem):
         print('ex', e)
     
 if __name__=="__main__":
+
+    #tfl = tf2_ros.TransformListener(tf_buffer)
     rospy.init_node("cor")
 
     topico_imagem = "/camera/rgb/image_raw/compressed"
@@ -166,13 +169,17 @@ if __name__=="__main__":
         # vel = Twist(Vector3(0,0,0), Vector3(0,0,math.pi/10.0))
         
         while not rospy.is_shutdown():
+
             # print(centro)
 
             # for r in resultados:
             #     print(r)
 
+            if frame is not None:
+            	cv2.imshow("AAA", frame)
+
             if (cv_image is not None) and (len(centro) > 0):
-                xfuga = detect_lines(cv_image)
+                xfuga, frame = detect_lines(cv_image)
                 print(centro)
                 print(xfuga)
 
