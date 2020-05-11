@@ -1,64 +1,54 @@
-import cv2
-import numpy as np
-from matplotlib import pyplot as plt
+#!/usr/bin/env python
+# BEGIN ALL
+import rospy, cv2, cv_bridge, numpy
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
 
-
-# VideoCapture = cv2.VideoCapture("vid1.mp4")
-# while VideoCapture.isOpened():
-#     ret, frame = VideoCapture.read()
-
-def detect_lines(frame):
-    global xfuga
-    y_image = int(frame.shape[0]*(2/3))
-    frame[:y_image] = 0
-    teste_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+image = None
     
-    # Apply edge detection method on the image 
-    edges = cv2.Canny(teste_gray,50,150,apertureSize = 3) 
+def image_callback(msg):
+    global image
 
-    # Detect points that form a line
+    image = cv_bridge.CvBridge().imgmsg_to_cv2(msg,desired_encoding='bgr8')
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower_yellow = numpy.array([ 10,  10,  10])
+    upper_yellow = numpy.array([255, 255, 250])
+    mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
 
-    lines = cv2.HoughLines(edges, 1, np.pi/180, 200)
-    line1 = False
-    line2 = False
-    m1 = 0
-    h1 = 0
-    m2 = 0
-    h2 = 0
+    print('estou aqui')
 
-    xfuga = None
+    h, w, d = image.shape
+    search_top = 3*h/4
+    search_bot = 3*h/4 + 20
+    mask[0:search_top, 0:w] = 0
+    mask[search_bot:h, 0:w] = 0
+    M = cv2.moments(mask)
 
-    # Draw lines on the image
-    if lines is not None:
-        for linha in lines:
-            for r,theta in linha: 
-                a = np.cos(theta) 
-                b = np.sin(theta)  
-                x0 = a*r 
-                y0 = b*r 
-                x1 = int(x0 + 1000*(-b))  
-                y1 = int(y0 + 1000*(a))  
-                x2 = int(x0 - 1000*(-b))  
-                y2 = int(y0 - 1000*(a)) 
-                if (x2-x1)!=0:
-                    m=(y2-y1)/(x2-x1)
-                if m < -0.25 and m > -3:
-                    if line1==False:
-                        line1=True
-                        m1 = m
-                        h1 = y1 - m * x1
-                        cv2.line(frame,(x1,y1), (x2,y2), (255,0,0),2)
-                elif m > 0.25 and m < 3:
-                    if line2 == False:
-                        line2 = True
-                        m2 = m
-                        h2 = y1 - m * x1
-                        cv2.line(frame,(x1,y1), (x2,y2), (255,0,0),2)
-        if (m1-m2)!=0:                    
-            xfuga = -1 * int((h2-h1)/(m1-m2))
-        # yfuga = int(m1 * xfuga + h1) 
-        # cv2.circle(frame,(xfuga,yfuga), 10, (0,0,0), -1)
+    if M['m00'] > 0:
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        cv2.circle(image, (cx, cy), 20, (0,0,255), -1)
 
-        # cv2.waitKey(1)
+        # BEGIN CONTROL
+        err = cx - w/2
+        twist.linear.x = 0.2
+        twist.angular.z = -float(err) / 100
+        cmd_vel_pub.publish(twist)
 
-        return xfuga, frame
+        # END CONTROL
+
+
+if __name__ == '__main__':
+    rospy.init_node('follower')
+    image_sub = rospy.Subscriber('/camera/rgb/image_raw', 
+                                      Image, image_callback)
+    cmd_vel_pub = rospy.Publisher('/cmd_vel',
+                                        Twist, queue_size=1)
+    twist = Twist()
+
+
+    while not rospy.is_shutdown():
+        if image is not None:
+            cv2.imshow("window", image)
+            cv2.waitKey(3)
+# END ALL
