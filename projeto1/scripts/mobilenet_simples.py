@@ -8,7 +8,6 @@ import numpy as np
 import argparse
 import cv2
 
-
 import rospkg
 import os
 
@@ -109,7 +108,6 @@ if __name__ == "__main__":
 
         # Display the resulting frame
         cv2.imshow('frame',result_frame)
-        
 
         # Prints the structures results:
         # Format:
