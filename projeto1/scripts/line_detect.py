@@ -2,12 +2,20 @@
 # BEGIN ALL
 import rospy, cv2, cv_bridge, numpy
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Vector3
+import visao_module
+
 
 image = None
+media = 0
+centro = 0
+maior_area = 0
     
 def image_callback(msg):
     global image
+    global media
+    global centro
+    global maior_area
 
     image = cv_bridge.CvBridge().imgmsg_to_cv2(msg,desired_encoding='bgr8')
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -36,6 +44,7 @@ def image_callback(msg):
         cmd_vel_pub.publish(twist)
 
         # END CONTROL
+    media, centro, maior_area = visao_module.identifica_cor(image)
 
 
 if __name__ == '__main__':
@@ -51,4 +60,8 @@ if __name__ == '__main__':
         if image is not None:
             cv2.imshow("window", image)
             cv2.waitKey(3)
+        if centro > 300:
+            print("verde")
+       # vel = Twist(Vector3(0,0,0), Vector3(0,0,0))
+        #cmd_vel_pub.publish(vel)
 # END ALL
