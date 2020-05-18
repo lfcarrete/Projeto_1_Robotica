@@ -39,12 +39,11 @@ def image_callback(msg):
 
         # BEGIN CONTROL
         err = cx - w/2
-        twist.linear.x = 0.2
-        twist.angular.z = -float(err) / 100
+        twist.linear.x = 0.1
+        twist.angular.z = -float(err) / 200
         cmd_vel_pub.publish(twist)
 
         # END CONTROL
-    media, centro, maior_area = visao_module.identifica_cor(image)
 
 
 if __name__ == '__main__':
@@ -57,11 +56,13 @@ if __name__ == '__main__':
 
 
     while not rospy.is_shutdown():
+
         if image is not None:
             cv2.imshow("window", image)
+            media, centro, maior_area = visao_module.identifica_cor(image)
+            
             cv2.waitKey(3)
-        if centro > 300:
-            print("verde")
+        
        # vel = Twist(Vector3(0,0,0), Vector3(0,0,0))
         #cmd_vel_pub.publish(vel)
 # END ALL
