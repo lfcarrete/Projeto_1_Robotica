@@ -5,13 +5,14 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist, Vector3
 import visao_module
 
-
+goal = ["green",11,"cat"]
 image = None
 media = 0
 centro = 0
 maior_area = 0
     
 def image_callback(msg):
+    
     global image
     global media
     global centro
@@ -59,7 +60,7 @@ if __name__ == '__main__':
 
         if image is not None:
             cv2.imshow("window", image)
-            media, centro, maior_area = visao_module.identifica_cor(image)
+            media, centro, maior_area = visao_module.identifica_cor(image,goal[0])
             
             cv2.waitKey(3)
         

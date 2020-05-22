@@ -36,7 +36,7 @@ def processa(frame):
     return centro, result_frame, result_tuples
 
 
-def identifica_cor(frame):
+def identifica_cor(frame, cor):
     '''
     Segmenta o maior objeto cuja cor é parecida com cor_h (HUE da cor, no espaço HSV).
     '''
@@ -47,20 +47,21 @@ def identifica_cor(frame):
     # do vermelho:
     # frame = cv2.flip(frame, -1) # flip 0: eixo x, 1: eixo y, -1: 2 eixos
     frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    if cor == "blue":
+        #Azul
+        cor_menor = np.array([90, 50, 50])
+        cor_maior = np.array([110, 255, 255])
+        
     
-    #Verde
-    #cor_menor = np.array([60, 50, 50])
-    #cor_maior = np.array([70, 255, 255])
-    #segmentado_cor = cv2.inRange(frame_hsv, cor_menor, cor_maior)
-
-    #Azul
-    #cor_menor = np.array([90, 50, 50])
-    #cor_maior = np.array([110, 255, 255])
-    #segmentado_cor = cv2.inRange(frame_hsv, cor_menor, cor_maior)
-
-    #Rosa
-    cor_menor = np.array([150, 50, 50])
-    cor_maior = np.array([180, 255, 255])
+    elif cor == "green":
+        #Verde
+        cor_menor = np.array([60, 50, 50])
+        cor_maior = np.array([70, 255, 255])
+        
+    else:
+        #Rosa
+        cor_menor = np.array([150, 50, 50])
+        cor_maior = np.array([180, 255, 255])
     segmentado_cor = cv2.inRange(frame_hsv, cor_menor, cor_maior)
 
     # Note que a notacão do numpy encara as imagens como matriz, portanto o enderecamento é
@@ -81,7 +82,7 @@ def identifica_cor(frame):
     segmentado_cor = cv2.morphologyEx(segmentado_cor,cv2.MORPH_CLOSE,np.ones((7, 7)))
 
     # Encontramos os contornos na máscara e selecionamos o de maior área
-    #contornos, arvore = cv2.findContours(segmentado_cor.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)	
+    #contornos, arvore = cv2.findContours(segmentado_cor.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)    
     contornos, arvore = cv2.findContours(segmentado_cor.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) 
 
     maior_contorno = None
