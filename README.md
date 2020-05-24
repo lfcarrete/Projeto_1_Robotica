@@ -7,3 +7,7 @@ Integrantes:
 
 
 Video de comprovacao parcial: https://drive.google.com/open?id=1SNa1EuskS1x7IIlu2p1DNWjyg3na-_CE
+
+
+Arquivo a ser rodado:
+line_detect.py
