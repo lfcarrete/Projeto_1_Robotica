@@ -4,13 +4,27 @@ import rospy, cv2, cv_bridge, numpy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
 import visao_module
+from nav_msgs.msg import Odometry
+from sensor_msgs.msg import LaserScan
+import math
 
-goal = ["green",11,"cat"]
+goal = ["blue",11,"cat"]
 image = None
 media = 0
 centro = 0
 maior_area = 0
 perto = False
+dist = None
+bateu = False
+x = None
+y = None
+x_inicial = None 
+y_inicial = None
+x_final = None
+y_final = None
+
+max_angular = math.pi/8
+
 def image_callback(msg):
     
     global image
@@ -62,7 +76,19 @@ def centraliza_creeper():
         vel = Twist(Vector3(0.3,0,0), Vector3(0,0,0))
         cmd_vel_pub.publish(vel)
 
-
+def scaneou(dados):
+    global dist
+    dist = dados.ranges[359]
+    print(dist)
+    
+def odometria(dados):
+    global x
+    global y
+    x = dados.pose.pose.position.x
+    y = dados.pose.pose.position.y
+    print("x: {}".format(x))
+    print("y: {}".format(y))
+        
 
 if __name__ == '__main__':
     rospy.init_node('follower')
@@ -71,6 +97,10 @@ if __name__ == '__main__':
     cmd_vel_pub = rospy.Publisher('/cmd_vel',
                                         Twist, queue_size=1)
     twist = Twist()
+
+    recebe_scan = rospy.Subscriber("/scan", LaserScan, scaneou)
+
+    odom = rospy.Subscriber("/odom", Odometry, odometria)
 
 
     while not rospy.is_shutdown():
@@ -83,11 +113,19 @@ if __name__ == '__main__':
             #print("media: {}".format(media))
             #print("centro: {}".format(centro))
             #print("maior_area: {}".format(maior_area))
+            #print(bateu)
+            if dist < 0.23:
+                bateu = True
+                print("Bateu")
             if maior_area > 3000:
                 perto = True
                 print("perto")
-            if media[0] < 400 and media[0] > 0 and perto:
+            if media[0] < 400 and media[0] > 0 and perto and bateu == False:
                 centraliza_creeper()
+            if bateu:
+                vel = Twist(Vector3(0,0,0), Vector3(0,0,0))
+                cmd_vel_pub.publish(vel)
+        
 
                 
 # END ALL
