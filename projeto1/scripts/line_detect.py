@@ -2,7 +2,7 @@
 # BEGIN ALL
 import rospy, cv2, cv_bridge, numpy
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Twist, Vector3
+from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
 import visao_module
 
 goal = ["green",11,"cat"]
@@ -10,7 +10,7 @@ image = None
 media = 0
 centro = 0
 maior_area = 0
-    
+perto = False
 def image_callback(msg):
     
     global image
@@ -24,7 +24,7 @@ def image_callback(msg):
     upper_yellow = numpy.array([255, 255, 250])
     mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
 
-    print('estou aqui')
+    
 
     h, w, d = image.shape
     search_top = 3*h/4
@@ -46,6 +46,23 @@ def image_callback(msg):
 
         # END CONTROL
 
+def centraliza_creeper():
+    global perto
+
+    tolerancia = 25
+    if (media[0] > centro[0] + tolerancia):
+    	vel = Twist(Vector3(0,0,0), Vector3(0,0,-0.1))
+        cmd_vel_pub.publish(vel)
+        print("esquerda")
+    if (media[0] < centro[0] - tolerancia):
+        vel = Twist(Vector3(0,0,0), Vector3(0,0,0.1))
+        cmd_vel_pub.publish(vel)
+        print("direita")
+    if (media[0] > centro[0]  - tolerancia and media[0] < centro[0]  + tolerancia ):
+        vel = Twist(Vector3(0.3,0,0), Vector3(0,0,0))
+        cmd_vel_pub.publish(vel)
+
+
 
 if __name__ == '__main__':
     rospy.init_node('follower')
@@ -63,7 +80,14 @@ if __name__ == '__main__':
             media, centro, maior_area = visao_module.identifica_cor(image,goal[0])
             
             cv2.waitKey(3)
-        
-       # vel = Twist(Vector3(0,0,0), Vector3(0,0,0))
-        #cmd_vel_pub.publish(vel)
+            #print("media: {}".format(media))
+            #print("centro: {}".format(centro))
+            #print("maior_area: {}".format(maior_area))
+            if maior_area > 3000:
+                perto = True
+                print("perto")
+            if media[0] < 400 and media[0] > 0 and perto:
+                centraliza_creeper()
+
+                
 # END ALL
