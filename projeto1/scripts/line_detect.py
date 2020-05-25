@@ -10,7 +10,7 @@ import math
 from tf import transformations
 import time
 
-goal = ["blue",11,"cat"]
+goal = ["green",11,"cat"]
 image = None
 media = 0
 centro = 0
@@ -135,11 +135,11 @@ if __name__ == '__main__':
             if bateu and achou == False:
                 if goal[0] == "blue":
                     while x > x_inicial - 0.2 and y > y_inicial - 0.2:
-                        vel = Twist(Vector3(-0.2,0,0),Vector3(0,0,0))
+                        vel = Twist(Vector3(-0.15,0,0),Vector3(0,0,0))
                         cmd_vel_pub.publish(vel)
                         print("Dentro do while")
                 elif goal[0] == "pink":
-                    while x > x_inicial - 0.2 :
+                    while x > x_inicial + 0.2:
                         vel = Twist(Vector3(-0.2,0,0),Vector3(0,0,0))
                         cmd_vel_pub.publish(vel)
                         print("Dentro do while") 
