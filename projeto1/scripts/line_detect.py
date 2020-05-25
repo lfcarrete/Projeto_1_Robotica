@@ -7,6 +7,7 @@ import visao_module
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
 import math
+from tf import transformations
 
 goal = ["blue",11,"cat"]
 image = None
@@ -14,7 +15,7 @@ media = 0
 centro = 0
 maior_area = 0
 perto = False
-dist = None
+dist = 0
 bateu = False
 x = None
 y = None
@@ -22,8 +23,9 @@ x_inicial = None
 y_inicial = None
 x_final = None
 y_final = None
-
+contador = 0
 max_angular = math.pi/8
+alfa = -1
 
 def image_callback(msg):
     
@@ -67,11 +69,11 @@ def centraliza_creeper():
     if (media[0] > centro[0] + tolerancia):
     	vel = Twist(Vector3(0,0,0), Vector3(0,0,-0.1))
         cmd_vel_pub.publish(vel)
-        print("esquerda")
+        print("Direita")
     if (media[0] < centro[0] - tolerancia):
         vel = Twist(Vector3(0,0,0), Vector3(0,0,0.1))
         cmd_vel_pub.publish(vel)
-        print("direita")
+        print("Esquerda")
     if (media[0] > centro[0]  - tolerancia and media[0] < centro[0]  + tolerancia ):
         vel = Twist(Vector3(0.3,0,0), Vector3(0,0,0))
         cmd_vel_pub.publish(vel)
@@ -79,28 +81,57 @@ def centraliza_creeper():
 def scaneou(dados):
     global dist
     dist = dados.ranges[359]
-    print(dist)
+    #print(dist)
     
 def odometria(dados):
     global x
     global y
+    global x_inicial
+    global x_final
+    global y_final
+    global y_inicial
+    global contador
+    global alfa
+
     x = dados.pose.pose.position.x
     y = dados.pose.pose.position.y
-    print("x: {}".format(x))
-    print("y: {}".format(y))
-        
+
+    quant = dados.pose.pose.orientation
+    lista = [quant.x,quant.y,quant.z,quant.w]
+    angulos_rad = transformations.euler_from_quaternion(lista)
+    angulos = numpy.degrees(angulos_rad)
+    alfa = angulos_rad[2]
+
+    if contador == 0:
+        x_inicial = x
+        y_inicial = y
+        contador += 1
+    if bateu == False:
+        x_final = x
+        y_final = y
+
+    
+
+def calcula_dist(x,y):
+    hipo = math.sqrt(math.pow(x,2) + math.pow(y,2))
+    return hipo
+
+def calcula_angulo(alfa, x,y):
+    beta = math.atan((y/x))
+    angulo_total = beta + math.pi - alfa
+    return angulo_total
 
 if __name__ == '__main__':
     rospy.init_node('follower')
     image_sub = rospy.Subscriber('/camera/rgb/image_raw', 
                                       Image, image_callback)
     cmd_vel_pub = rospy.Publisher('/cmd_vel',
-                                        Twist, queue_size=1)
+                                        Twist, queue_size=3)
     twist = Twist()
 
     recebe_scan = rospy.Subscriber("/scan", LaserScan, scaneou)
 
-    odom = rospy.Subscriber("/odom", Odometry, odometria)
+    odom = rospy.Subscriber("/odom", Odometry, odometria) #Baseado no codigo do gabarito da questao 3 da prova 1
 
 
     while not rospy.is_shutdown():
@@ -110,11 +141,8 @@ if __name__ == '__main__':
             media, centro, maior_area = visao_module.identifica_cor(image,goal[0])
             
             cv2.waitKey(3)
-            #print("media: {}".format(media))
-            #print("centro: {}".format(centro))
-            #print("maior_area: {}".format(maior_area))
-            #print(bateu)
-            if dist < 0.23:
+            
+            if dist <= 0.25 and dist > 0:
                 bateu = True
                 print("Bateu")
             if maior_area > 3000:
@@ -123,9 +151,27 @@ if __name__ == '__main__':
             if media[0] < 400 and media[0] > 0 and perto and bateu == False:
                 centraliza_creeper()
             if bateu:
-                vel = Twist(Vector3(0,0,0), Vector3(0,0,0))
-                cmd_vel_pub.publish(vel)
+                ang = calcula_angulo(alfa, (x_final - x_inicial), (y_final - y_inicial))
+                dist = calcula_dist((x_final - x_inicial), (y_final-y_inicial))
+                
+                vel_rot = Twist(Vector3(0,0,0),Vector3(0,0,max_angular))
+                vel_trans = Twist(Vector3(0.2,0,0),Vector3(0,0,0))
+                zero = Twist(Vector3(0,0,0),Vector3(0,0,0))
         
+                sleep_rot = abs(ang/max_angular)
+                sleep_trans = abs(dist/0.2)
+                
+                cmd_vel_pub.publish(zero)
+                print("SLEEP")
+                rospy.sleep(10.0)
+                
 
+                
+                
+
+                print("AAAA")
+
+                #cmd_vel_pub.publish(Twist(Vector3(0,0,0),Vector3(0,0,0.3)))
+                #rospy.sleep(30)
                 
 # END ALL
