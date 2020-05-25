@@ -122,8 +122,8 @@ if __name__ == '__main__':
     
             #print(x_inicial)
             #print(y_inicial)
-            print(x)
-            print(y)
+            #print(x)
+            #print(y)
             if dist <= 0.25 and dist > 0:
                 bateu = True
                 print("Bateu")
@@ -133,10 +133,21 @@ if __name__ == '__main__':
             if media[0] < 400 and media[0] > 0 and perto and bateu == False:
                 centraliza_creeper()
             if bateu and achou == False:
-                while x > x_inicial - 0.2 and y > y_inicial - 0.2:
-                    vel = Twist(Vector3(-0.2,0,0),Vector3(0,0,0))
-                    cmd_vel_pub.publish(vel)
-                    print("Dentro do while")
+                if goal[0] == "blue":
+                    while x > x_inicial - 0.2 and y > y_inicial - 0.2:
+                        vel = Twist(Vector3(-0.2,0,0),Vector3(0,0,0))
+                        cmd_vel_pub.publish(vel)
+                        print("Dentro do while")
+                elif goal[0] == "pink":
+                    while x > x_inicial - 0.2 :
+                        vel = Twist(Vector3(-0.2,0,0),Vector3(0,0,0))
+                        cmd_vel_pub.publish(vel)
+                        print("Dentro do while") 
+                elif goal[0] == "green":
+                    while y < y_inicial + 0.2 :
+                        vel = Twist(Vector3(-0.2,0,0),Vector3(0,0,0))
+                        cmd_vel_pub.publish(vel)
+                        print("Dentro do while")      
                 vel = Twist(Vector3(0,0,0),Vector3(0,0,0))
                 cmd_vel_pub.publish(vel)
                 achou = True
